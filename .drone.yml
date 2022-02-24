@@ -1,0 +1,92 @@
+---
+kind: pipeline
+name: notify-start
+type: kubernetes
+
+clone:
+    disable: true
+
+steps:
+    -   name: notify
+        image: plugins/matrix
+        settings:
+            homeserver: https://matrix.r3pek.org
+            roomid: WoiVveqWRODCjCXIrb:r3pek.org
+            username:
+                from_secret: matrix_username
+            password:
+                from_secret: matrix_password
+            template: >
+                {{#if build.pull }}
+                  **Build started**: {{ repo.owner }}/{{ repo.name }} - [Pull Request #{{ build.pull }}](https://code.r3pek.org/{{ repo.owner }}/{{ repo.name }}/pull/{{ build.pull }})>
+                {{else}}
+                  **Build started**: {{ repo.owner }}/{{ repo.name }} - Build **#{{ build.number }}** (type: `{{ build.event }}`)
+                {{/if}}
+                <br/>Commit: [{{ truncate build.commit 8 }}](https://code.r3pek.org/{{ repo.owner }}/{{ repo.name }}/commit/{{ build.commit }})
+                Branch: [{{ build.branch }}](https://code.r3pek.org/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }})
+                Author: {{ build.author }}
+                [Visit build page ↗]({{ build.link }})
+                <br/>Message:<br/>
+                <br/>```
+                {{ commit.message }}
+                ```
+                <br/>
+
+---
+kind: pipeline
+name: build-docker-image
+type: kubernetes
+
+steps:
+    -   name: build-docker-image
+        image: plugins/kaniko
+        settings:
+            repo: r3pek/snappymail
+            auto_tag: true
+            username:
+                from_secret: docker_username
+            password:
+                from_secret: docker_password
+            when:
+                branch: master
+                event: push  
+
+---
+kind: pipeline
+name: notify-end
+type: kubernetes
+
+clone:
+    disable: true
+
+steps:
+    -   name: notify
+        image: plugins/matrix
+        settings:
+            homeserver: https://matrix.r3pek.org
+            roomid: WoiVveqWRODCjCXIrb:r3pek.org
+            username:
+                from_secret: matrix_username
+            password:
+                from_secret: matrix_password
+            template: >
+                {{#if build.pull }}
+                  **{{#success build.status}}✔{{ else }}✘{{/success}} {{ uppercasefirst build.status }}**: {{ repo.owner }}/{{ repo.name }} - [Pull Request #{{ build.pull }}](https://code.r3pek.org/{{ repo.owner }}/{{ repo.name }}/pull/{{ build.pull }})
+                {{else}}
+                  **{{#success build.status}}✔{{ else }}✘{{/success}} {{ uppercasefirst build.status }}**: {{ repo.owner }}/{{ repo.name }} - Build **#{{ build.number }}** (type: `{{ build.event }}`)
+                {{/if}}
+                <br>Commit: [{{ truncate build.commit 8 }}](https://code.r3pek.org/{{ repo.owner }}/{{ repo.name }}/commit/{{ build.commit }})
+                Branch: [{{ build.branch }}](https://code.r3pek.org/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }})
+                Author: {{ build.author }}
+                Duration: {{ since build.created }}
+                [Visit build page ↗]({{ build.link }})
+                <br/>
+                <br/>
+
+depends_on:
+    - build-docker-image
+
+trigger:
+    status:
+        - success
+        - failure
