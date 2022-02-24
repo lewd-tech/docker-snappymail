@@ -33,7 +33,7 @@ RUN php -m && \
 
 # Install snappymail
 WORKDIR /tmp
-COPY https://github.com/the-djmaze/snappymail/releases/download/v${SNAPPYMAIL_VERSION}/snappymail-${SNAPPYMAIL_VERSION}.zip .
+ADD https://github.com/the-djmaze/snappymail/releases/download/v${SNAPPYMAIL_VERSION}/snappymail-${SNAPPYMAIL_VERSION}.zip .
 RUN mkdir /snappymail && \
     unzip -q snappymail-${SNAPPYMAIL_VERSION}.zip -d /snappymail && \
     find /snappymail -type d -exec chmod 755 {} \; && \
