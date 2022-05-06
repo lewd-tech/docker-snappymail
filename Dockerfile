@@ -1,7 +1,7 @@
 # Inspired by the original Rainloop dockerfile from youtous on GitLab
 FROM php:7.4-fpm-buster
 
-ARG SNAPPYMAIL_VERSION=2.12.2
+ARG SNAPPYMAIL_VERSION=2.15.1
 LABEL org.label-schema.description="SnappyMail webmail client image using nginx, php-fpm based on Debian Buster"
 
 ENV UID=991 GID=991 UPLOAD_MAX_SIZE=25M LOG_TO_STDERR=true MEMORY_LIMIT=128M SECURE_COOKIES=true
